@@ -42,7 +42,7 @@ runs:
     - name: "Build HTTP route"
       id: http-route
       run: |
-        echo "route=POST /repos/${{ inputs.owner }}/${{ inputs.repo }}/collaborators/${{ inputs.username }}" >> "$GITHUB_OUTPUT"
+        echo "route=PUT /repos/${{ inputs.owner }}/${{ inputs.repo }}/collaborators/${{ inputs.username }}" >> "$GITHUB_OUTPUT"
       shell: bash
     - name: "Build HTTP body"
       id: http-body

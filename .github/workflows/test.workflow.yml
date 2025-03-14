@@ -43,7 +43,7 @@ jobs:
           FLECS_ACTION_ROUTE: ${{ env.FLECS_ACTION_ROUTE }}
           FLECS_ACTION_DATA: ${{ env.FLECS_ACTION_DATA }}
         run: |
-          EXPECTED_ROUTE="POST /repos/${FLECS_ACTION_INPUT_OWNER}/${FLECS_ACTION_INPUT_REPO}/collaborators/${FLECS_ACTION_INPUT_USERNAME}"
+          EXPECTED_ROUTE="PUT /repos/${FLECS_ACTION_INPUT_OWNER}/${FLECS_ACTION_INPUT_REPO}/collaborators/${FLECS_ACTION_INPUT_USERNAME}"
           if [ "${FLECS_ACTION_ROUTE}" != "${EXPECTED_ROUTE}" ]; then
             echo "❌ TC01: ROUTE assertion failed" 1>&2
             echo "❌ Expected: ${EXPECTED_ROUTE}" 1>&2
