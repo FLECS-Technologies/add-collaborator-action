@@ -17,7 +17,13 @@ on:
         required: false
       permission:
         description: "one of (pull|triage|push|maintain|admin)"
-        type: string
+        type: choice
+        options:
+          - pull
+          - triage
+          - push
+          - maintain
+          - admin
         required: false
         default: "push"
 
