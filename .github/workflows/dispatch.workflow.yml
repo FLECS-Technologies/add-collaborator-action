@@ -1,0 +1,47 @@
+name: "Add collaborator to an existing GitHub repository"
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "Name of the repository"
+        type: string
+        required: true
+      owner:
+        description: "Repository owner"
+        type: string
+        required: true
+      username:
+        description: "GitHub user to add as collaborator"
+        type: string
+        required: false
+      permission:
+        description: "one of (pull|triage|push|maintain|admin)"
+        type: string
+        required: false
+        default: "push"
+
+jobs:
+    add-collaborator:
+      runs-on: ubuntu-latest
+      steps:
+        - name: "Clone repository"
+          uses: actions/checkout@v4
+        - name: Create GitHub App installation access token
+          id: app-token
+          uses: actions/create-github-app-token@v1
+          with:
+            app-id: ${{ secrets.FLECS_WORKFLOW_AUTOMATION_CLIENT_ID }}
+            private-key: ${{ secrets.FLECS_WORKFLOW_AUTOMATION_KEY }}
+            owner: ${{ github.repository_owner }}
+            repositories: ${{ inputs.repo }}
+        - name: "Adding collaborator ${{ inputs.username }} (role ${{ inputs.permission }}) to ${{ inputs.org }}/${{ inputs.repo }}"
+          uses: ./
+          with:
+            repo: ${{ inputs.repo }}
+            owner: ${{ inputs.owner }}
+            username: ${{ inputs.username }}
+            permission: ${{ inputs.permission }}
+            auto-init: ${{ inputs.auto-init }}
+          env:
+            GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
