@@ -48,6 +48,5 @@ jobs:
             owner: ${{ inputs.owner }}
             username: ${{ inputs.username }}
             permission: ${{ inputs.permission }}
-            auto-init: ${{ inputs.auto-init }}
           env:
             GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
