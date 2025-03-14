@@ -1,0 +1,68 @@
+name: "Add collaborator action"
+description: "Adds a collaborator to an existing GitHub repository"
+author: "FLECS Technologies GmbH <info@flecs.tech>"
+
+inputs:
+  repo:
+    description: "Name of the repository"
+    type: string
+    required: true
+  owner:
+    description: "Repository owner"
+    type: string
+    required: true
+  username:
+    description: "GitHub user to add as collaborator"
+    type: string
+    required: false
+  permission:
+    description: "one of (pull|triage|push|maintain|admin)"
+    type: string
+    required: false
+    default: "push"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Validate inputs"
+      run: |
+        if [ -z "${{ env.GITHUB_TOKEN }}" ]; then
+          echo "Required enviroment variable GITHUB_TOKEN is not set" 1>&2
+          exit 1
+        fi
+        if [ -z "${{ inputs.repo }}" ]; then
+          echo "Required input repo is not set" 1>&2
+          exit 1
+        fi
+        if [ -z "${{ inputs.owner }}" ]; then
+          echo "Required input repo is not set" 1>&2
+          exit 1
+        fi
+      shell: bash
+    - name: "Build HTTP route"
+      id: http-route
+      run: |
+        echo "route=POST /repos/${{ inputs.owner }}/${{ inputs.repo }}/collaborators/${{ inputs.username }}" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - name: "Build HTTP body"
+      id: http-body
+      run: |
+        echo "data={\"permission\":\"${{ inputs.permission }}\"}" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - name: "Unit test"
+      if: env.FLECS_ACTION_UNIT_TEST == 'true'
+      env:
+        FLECS_ACTION_ROUTE: ${{ steps.http-route.outputs.route }}
+        FLECS_ACTION_DATA: ${{ steps.http-body.outputs.data }}
+      run: |
+        echo "FLECS_ACTION_ROUTE=${FLECS_ACTION_ROUTE}" >> "$GITHUB_ENV"
+        echo "FLECS_ACTION_DATA=${FLECS_ACTION_DATA}" >> "$GITHUB_ENV"
+      shell: bash
+    - name: ""
+      if: env.FLECS_ACTION_UNIT_TEST != 'true'
+      uses: octokit/request-action@v2.x
+      with:
+        route: ${{ steps.http-route.outputs.route }}
+        data: ${{ steps.http-body.outputs.data }}
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
