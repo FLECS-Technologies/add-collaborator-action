@@ -1,0 +1,71 @@
+name: "Test add-collaborators-action"
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      FLECS_ACTION_UNIT_TEST: "true"
+      FLECS_ACTION_INPUT_REPO: "some-repo"
+      FLECS_ACTION_INPUT_OWNER: "some-owner"
+      FLECS_ACTION_INPUT_USERNAME: "some-user"
+      FLECS_ACTION_INPUT_PERMISSION: "admin"
+      FLECS_ACTION_ENV_GITHUB_TOKEN: "some-token"
+    steps:
+      - name: "Export variables"
+        id: export-vars
+        run: |
+          echo "input_repo=${FLECS_ACTION_INPUT_REPO}" >> "$GITHUB_OUTPUT"
+          echo "input_owner=${FLECS_ACTION_INPUT_OWNER}" >> "$GITHUB_OUTPUT"
+          echo "input_username=${FLECS_ACTION_INPUT_USERNAME}" >> "$GITHUB_OUTPUT"
+          echo "input_permission=${FLECS_ACTION_INPUT_PERMISSION}" >> "$GITHUB_OUTPUT"
+          echo "env_github_token=${FLECS_ACTION_ENV_GITHUB_TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+
+      - name: "TC01: Basic usage"
+        id: tc01
+        uses: ./
+        with:
+          repo: ${{ steps.export-vars.outputs.input_repo }}
+          owner: ${{ steps.export-vars.outputs.input_owner }}
+          username: ${{ steps.export-vars.outputs.input_username }}
+          permission: ${{ steps.export-vars.outputs.input_permission }}
+        env:
+          GITHUB_TOKEN: ${{ steps.export-vars.outputs.env_github_token }}
+      - name: "TC01: Validate output"
+        env:
+          FLECS_ACTION_ROUTE: ${{ env.FLECS_ACTION_ROUTE }}
+          FLECS_ACTION_DATA: ${{ env.FLECS_ACTION_DATA }}
+        run: |
+          EXPECTED_ROUTE="POST /repos/${FLECS_ACTION_INPUT_OWNER}/${FLECS_ACTION_INPUT_REPO}/collaborators/${FLECS_ACTION_INPUT_USERNAME}"
+          if [ "${FLECS_ACTION_ROUTE}" != "${EXPECTED_ROUTE}" ]; then
+            echo "❌ TC01: ROUTE assertion failed" 1>&2
+            echo "❌ Expected: ${EXPECTED_ROUTE}" 1>&2
+            echo "❌ Got:      ${FLECS_ACTION_ROUTE}" 1>&2
+            exit 1
+          else
+            echo "✅ TC01: ROUTE assertion passed"
+            echo "✅ Expected: ${EXPECTED_ROUTE}"
+            echo "✅ Got:      ${FLECS_ACTION_ROUTE}"
+          fi
+
+          EXPECTED_DATA=$(echo "{\
+            \"permission\":\"${FLECS_ACTION_INPUT_PERMISSION}\"\
+          }" | jq -rcS)
+          FLECS_ACTION_DATA=$(echo "${FLECS_ACTION_DATA}" | jq -rcS)
+          if [ "${FLECS_ACTION_DATA}" != "${EXPECTED_DATA}" ]; then
+            echo "❌ TC01: DATA assertion failed" 1>&2
+            echo "❌ Expected: ${EXPECTED_DATA}" 1>&2
+            echo "❌ Got:      ${FLECS_ACTION_DATA}" 1>&2
+            exit 1
+          else
+            echo "✅ TC01: DATA assertion passed"
+            echo "✅ Expected: ${EXPECTED_DATA}"
+            echo "✅ Got:      ${FLECS_ACTION_DATA}"
+          fi
